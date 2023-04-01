@@ -2,11 +2,10 @@
 #include <stdlib.h>
 #include "cuda_runtime.h"
 
-__global__ void kernel_vecDouble(int *in, int *out, const size_t n) {
-	int i = threadIdx.x;
-	if (i < n) {
-		out[i] = in[i] * 2;
-	}
+// Reference:
+// 	https://github.com/rueiwoqpqpwoeiru/image-process-CUDA/blob/main/Basic.h
+template<typename T, class... Args> __global__ void generic_kernel(T *obj, Args... args) {
+	(obj->kernel)(args...);
 }
 
 template<class T>
@@ -27,6 +26,13 @@ class HostDoubler {
 };
 
 class DeviceDoubler {
+	private:
+		__device__ __forceinline__ void kernel(int *in, int *out, const size_t n) {
+			int i = threadIdx.x;
+			if (i < n) {
+				out[i] = in[i] * 2;
+			}
+		}
 	public:
 		static void vecDouble(int *hIn, int *hOut, const size_t n) {
 			int *dIn;
@@ -35,7 +41,7 @@ class DeviceDoubler {
 			cudaMalloc((void **)&dOut, n * sizeof(int));
 			cudaMemcpy(dIn, hIn, n * sizeof(int), cudaMemcpyHostToDevice);
 
-			kernel_vecDouble<<<1, n>>>(dIn, dOut, n);
+			generic_kernel<DeviceDoubler> <<<1, n>>>(dIn, dOut, n);
 			cudaDeviceSynchronize();
 
 			cudaMemcpy(hOut, dOut, n * sizeof(int), cudaMemcpyDeviceToHost);
