@@ -26,22 +26,22 @@ class HostDoubler {
 };
 
 class DeviceDoubler {
-	private:
+	public:
 		__device__ __forceinline__ void kernel(int *in, int *out, const size_t n) {
 			int i = threadIdx.x;
 			if (i < n) {
 				out[i] = in[i] * 2;
 			}
 		}
-	public:
-		static void vecDouble(int *hIn, int *hOut, const size_t n) {
+
+		void vecDouble(int *hIn, int *hOut, const size_t n) {
 			int *dIn;
 			int *dOut;
 			cudaMalloc((void **)&dIn, n * sizeof(int));
 			cudaMalloc((void **)&dOut, n * sizeof(int));
 			cudaMemcpy(dIn, hIn, n * sizeof(int), cudaMemcpyHostToDevice);
 
-			generic_kernel<DeviceDoubler> <<<1, n>>>(dIn, dOut, n);
+			generic_kernel<DeviceDoubler> <<<1, n>>>(this, dIn, dOut, n);
 			cudaDeviceSynchronize();
 
 			cudaMemcpy(hOut, dOut, n * sizeof(int), cudaMemcpyDeviceToHost);
@@ -49,8 +49,6 @@ class DeviceDoubler {
 			cudaFree(dOut);
 		}
 };
-
-static void vecDouble(int *, int *, const size_t);
 
 int main() {
 	printf("Hello\n");
