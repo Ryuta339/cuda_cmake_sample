@@ -2,6 +2,13 @@
 #include <stdlib.h>
 #include "cuda_runtime.h"
 
+__global__ void kernel_vecDouble(int *in, int *out, const size_t n) {
+	int i = threadIdx.x;
+	if (i < n) {
+		out[i] = in[i] * 2;
+	}
+}
+
 template<class T>
 class Doubler {
 	T obj;
@@ -17,17 +24,9 @@ class HostDoubler {
 			for (size_t i=0; i<n; i++)
 				out[i] = in[i] * 2;
 		}
-}
+};
 
 class DeviceDoubler {
-	private:
-		__global__ void kernel_vecDouble(int *in, int *out, const size_t n) {
-			int i = threadIdx.x;
-			if (i < n) {
-				out[i] = in[i] * 2;
-			}
-		}
-
 	public:
 		static void vecDouble(int *hIn, int *hOut, const size_t n) {
 			int *dIn;
@@ -43,7 +42,7 @@ class DeviceDoubler {
 			cudaFree(dIn);
 			cudaFree(dOut);
 		}
-}
+};
 
 static void vecDouble(int *, int *, const size_t);
 
